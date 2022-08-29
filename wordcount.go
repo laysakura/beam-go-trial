@@ -1,4 +1,4 @@
-// Copied from: https://github.com/apache/beam/blob/master/sdks/go/examples/wordcount/wordcount.go
+// Initially copied from: https://github.com/apache/beam/blob/master/sdks/go/examples/wordcount/wordcount.go
 
 // Licensed to the Apache Software Foundation (ASF) under one or more
 // contributor license agreements.  See the NOTICE file distributed with
@@ -80,7 +80,15 @@ import (
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/io/textio"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/register"
 	"github.com/apache/beam/sdks/v2/go/pkg/beam/transforms/stats"
-	"github.com/apache/beam/sdks/v2/go/pkg/beam/x/beamx"
+
+	// Import the reflection-optimized runtime.
+	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/core/runtime/exec/optimized"
+	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/gcs"
+	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/io/filesystem/local"
+
+	// The imports here are for the side effect of runner registration.
+	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/runners/dataflow"
+	_ "github.com/apache/beam/sdks/v2/go/pkg/beam/runners/direct"
 )
 
 // Concept #2: Defining your own configuration options. Pipeline options can
@@ -202,9 +210,8 @@ func main() {
 	formatted := beam.ParDo(s, formatFn, counted)
 	textio.Write(s, *output, formatted)
 
-	// Concept #1: The beamx.Run convenience wrapper allows a number of
-	// pre-defined runners to be used via the --runner flag.
-	if err := beamx.Run(context.Background(), p); err != nil {
+	// Run by DirectRunner
+	if _, err := beam.Run(context.Background(), "direct", p); err != nil {
 		log.Fatalf("Failed to execute job: %v", err)
 	}
 }
